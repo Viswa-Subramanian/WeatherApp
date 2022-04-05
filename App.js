@@ -2,41 +2,79 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Platform } from 'react-native';
 import { KeyboardAvoidingView, ImageBackground, TextInput } from 'react-native';
 import searchInput from './components/searchinput';
+import { fetchLocationId } from './utils/api';
 import getImage from './utils/getImage';
+import{fetchWeather} from './utils/api'
+import ActivityIndicatorViewNativeComponent from 'react-native/Libraries/Components/ActivityIndicator/ActivityIndicatorViewNativeComponent';
 
-export default function App() {
-  return (
+export default class App extends React.Component {
+  constructor(props){
+  super(props);
+  this.setState={
+    loading:false,
+    error:false,
+    location:'',
+    weather:'',
+    temperature: 0,
+  };
+}
+componentDidMount(){
+  this.handleUpdateLocation('Dubai')
+}
 
     handleUpdateLocation = async city =>{
       if(!city) return;
       this.setState({loading:true}, async ()=> {
         try{
           const locationId = await fetchLocationId(city);
-          const {location,weather,temperture} = await fetchWeather(locationId, weather, temperture)
+          const {location,weather,temperture} = await fetchWeather(locationId, weather, temperture);
+          this.setState(
+            {loading:false,
+            error:false,
+            location,weather,temperature,});
+          
         }
         catch(e){
-          console.log("error");
+          this.setState({
+            loading:true,
+            error:true,
+          });
         }
-      })
-      
-    });
+        }
+  )}
+  render(){
+    const{loading,error,location,weather,temperature}=this.setState;
+    return (
+      <KeyboardAvoidingView style={styles.container} behaviour="padding">
+      <ImageBackground source = {getImages(weather)}
+      style={style.imageContainer}
+      imageStyle={styles.image}>
+      <View style={styles.container}>
+        <ActivityIndicator animating={loading} color="white" size="large"/>
+        {!loading &&(
+          <View>
+            {!error &&(
+              <View>
+              <Text style={[styles.largeText, styles.textStyle]}>{location}</Text>
+              <Text style={[styles.smallText, styles.textStyle]}>{weather}</Text>
+              <Text style={[styles.smallText, styles.textStyle]}>{`${Math.celi(temperature) }Deg`}</Text>
+              </View>
+  
+            )}
+          </View>
+        )}
+        <searchInput placeHolder="serach any city" onSubmit={this.handleUpdateLocation}/>
+        <StatusBar style="auto" />
+  
+      </View>
+      </ImageBackground>
+      </KeyboardAvoidingView>
+      )
+  }
+  }
     
-    <KeyboardAvoidingView style={styles.container} behaviour="padding">
-    <ImageBackground source = {getImages(weather)}
-    style={style.imageContainer}
-    imageStyle={styles.image}>
-    <View style={styles.container}>
-      <Text style={[style.textStyle, styles.largeText]}>Sanghai</Text>
-      <Text style={[style.textStyle, styles.smallText]}>Cloudy</Text>
-      <Text style={[style.textStyle, styles.largeText]}>23</Text>
-      <searchInput placeHolder="serach any city" onSubmit={this.handleUpdateLocation}/>
-      <StatusBar style="auto" />
-
-    </View>
-    </ImageBackground>
-    </KeyboardAvoidingView>
-
-}
+   
+    
 
 
 const styles = StyleSheet.create({
